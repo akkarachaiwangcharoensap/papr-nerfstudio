@@ -15,20 +15,7 @@ class Node:
         self._wxyz = self._scene_object.get_rotation().wxyz
 
         self._selected = False
-
         self._default_color = [0, 0, 255]
-
-        # # Add a blue sphere to the scene.
-        # self._object = self._server.scene.add_icosphere(
-        #     name=f"/sphere_blue_{self._index}",
-        #     radius=0.3,
-        #     color=[0, 0, 255],
-        #     subdivisions=2,
-        #     position=tuple(position),
-        #     wxyz=self._wxyz,
-        #     visible=True,
-        #     flat_shading=True,
-        # )
 
         # Add a blue sphere to the scene.
         self._object = self._server.scene.add_point_cloud(
@@ -89,14 +76,6 @@ class Node:
         scene_object_handle = self._editor.get_scene_object_handle()
         scene_object_handle.vertices = self._editor.low_poly_mesh.vertices
         print(f"Updated vertex {min_index} to new local position: {new_local}")
-
-    # def on_selected(self):
-    #     self._selected = True
-    #     self._object.color = [0, 255, 0]
-
-    # def on_deselected(self):
-    #     self._selected = False
-    #     self._object.color = [0, 0, 255]
 
     def on_selected(self):
         self._selected = True

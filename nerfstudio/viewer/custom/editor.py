@@ -2,9 +2,8 @@ import time
 import numpy as np
 import viser
 
-from nerfstudio.viewer.scene_object import SceneObject
-from nerfstudio.viewer.node import Node
-
+from nerfstudio.viewer.custom.scene_object import SceneObject
+from nerfstudio.viewer.custom.node import Node
 
 class MeshEditor:
     """
