@@ -46,7 +46,7 @@ from nerfstudio.viewer.utils import CameraState, parse_object
 from nerfstudio.viewer.viewer_elements import ViewerControl, ViewerElement
 from nerfstudio.viewer_legacy.server import viewer_utils
 
-from nerfstudio.viewer.selection_tool_panel import SelectionToolTab
+from nerfstudio.viewer.custom.selection_tool_panel import SelectionToolTab
 
 if TYPE_CHECKING:
     from nerfstudio.engine.trainer import Trainer
