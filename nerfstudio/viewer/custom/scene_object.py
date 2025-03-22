@@ -4,30 +4,27 @@ import viser
 
 class SceneObject:
     def __init__(self, file_path):
-        # Load and scale the original mesh.
-        self._mesh = trimesh.load_mesh(file_path)
-        assert isinstance(self._mesh, trimesh.Trimesh), "Mesh failed to load as a Trimesh"
-
-        self._mesh.apply_scale(1)
-
-        # Simplify the mesh to create a low-poly version.
-        self._low_poly_mesh = self._mesh.simplify_quadric_decimation(1)
-
-        # Define mesh transformation: rotation and translation.
-        self._mesh_rot = viser.transforms.SO3.from_x_radians(np.pi / 2)
-        self._mesh_pos = np.array([0.0, 0.0, 0.0])
-
-        # Precompute the global positions of the low-poly mesh vertices.
-        self._global_vertices = self._mesh_rot.apply(self._low_poly_mesh.vertices) + self._mesh_pos
+        # Load the PLY file as a point cloud.
+        self._point_cloud = trimesh.load(file_path, process=False)
+        
+        # Check if vertices exist (i.e. the file contains point cloud vertices).
+        if hasattr(self._point_cloud, 'vertices'):
+            self._points = self._point_cloud.vertices
+        else:
+            raise ValueError("Loaded file does not contain point cloud vertices.")
+        
+        # Define a transformation: rotate 90° about the X-axis and no translation.
+        self._rotation = viser.transforms.SO3.from_x_radians(np.pi / 2)
+        self._position = np.array([0.0, 0.0, 0.0])
+        
+        # Compute global positions of the points.
+        self._global_points = self._rotation.apply(self._points) + self._position
     
-    def get_mesh(self) -> trimesh.Trimesh:
-        return self._low_poly_mesh
+    def get_points(self) -> np.ndarray:
+        return self._global_points
     
-    def get_global_vertices(self) -> np.ndarray:
-        return self._global_vertices
+    def get_position(self) -> np.ndarray:
+        return self._position
     
-    def get_position(self) -> np.array:
-        return self._mesh_pos
-    
-    def get_rotation(self) -> viser.transforms.SO3:
-        return self._mesh_rot
+    def get_rotation(self):
+        return self._rotation

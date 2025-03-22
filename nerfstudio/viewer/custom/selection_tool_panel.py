@@ -67,31 +67,22 @@ class SelectionToolTab:
         # Find candidate nodes whose projected positions lie in the rectangle.
         candidate_indices = self._get_vertices_in_rect(proj, rect_min, rect_max)
 
-        # Filter candidates by checking for occlusion.
-        visible_indices = self._filter_visible_indices(candidate_indices, nodes_positions, camera)
-
-        if not visible_indices:
-            print("No visible points selected")
-            return
-
-        print(f"Selected visible points: {visible_indices}")
-        
         # Find the center point to position group gizmo.
-        selected_positions = nodes_positions[visible_indices]
+        selected_positions = nodes_positions[candidate_indices]
         group_center = selected_positions.mean(axis=0)
 
         # Create a group gizmo at the center of the selected nodes.
-        group_gizmo, group_initial_center = self._create_group_gizmo(group_center, len(visible_indices))
+        group_gizmo, group_initial_center = self._create_group_gizmo(group_center, len(candidate_indices))
 
         # Change the color of selected nodes to green.
-        self._select_nodes(visible_indices)
+        self._select_nodes(candidate_indices)
 
         # Save the selection state and enable the deselect button.
-        self._update_selection_state(visible_indices, group_gizmo, group_initial_center)
+        self._update_selection_state(candidate_indices, group_gizmo, group_initial_center)
 
         # Register an update callback for the group gizmo.
         group_gizmo.on_update(
-            lambda event: self._group_selection(group_gizmo, visible_indices, group_initial_center)
+            lambda event: self._group_selection(group_gizmo, candidate_indices, group_initial_center)
         )
 
     def _reset_selection_state(self, event: viser.ScenePointerEvent):
@@ -155,64 +146,6 @@ class SelectionToolTab:
         )[0]
         return vertices
 
-    def _is_visible(self, node_pos: np.ndarray, camera) -> bool:
-        """
-        Check if a node at a given world position is visible (i.e. not occluded) from the camera.
-        """
-        ray_origin = np.array(camera.position)
-        ray_dir = node_pos - ray_origin
-        distance_to_node = np.linalg.norm(ray_dir)
-        if distance_to_node < 1e-6:
-            return True
-
-        ray_dir_norm = ray_dir / distance_to_node
-
-        # Transform ray to local coordinates of the scene object.
-        ray_origin_local = self._scene_object.get_rotation().inverse().apply(
-            ray_origin - self._scene_object.get_position()
-        )
-        ray_dir_local = self._scene_object.get_rotation().inverse().apply(ray_dir_norm)
-
-        intersector = trimesh.ray.ray_triangle.RayMeshIntersector(
-            self._scene_object.get_mesh()
-        )
-        hit_positions, _, _ = intersector.intersects_location(
-            ray_origin_local.reshape(1, 3),
-            ray_dir_local.reshape(1, 3),
-            multiple_hits=False,
-        )
-
-        if len(hit_positions) > 0:
-            hit_global = (
-                self._scene_object.get_rotation().apply(hit_positions[0])
-                + self._scene_object.get_position()
-            )
-            hit_distance = np.linalg.norm(hit_global - ray_origin)
-            # If an intersection is detected before reaching the node, it is occluded.
-            if hit_distance < distance_to_node - 0.01:
-                return False
-        return True
-
-    def _filter_visible_indices(
-        self, candidate_indices: np.ndarray, nodes_positions: np.ndarray, camera
-    ) -> list:
-        """
-        Filter candidate node indices to include only those that are visible from the camera.
-        
-        Parameters:
-            candidate_indices (np.ndarray): Array of candidate indices based on the rectangle.
-            nodes_positions (np.ndarray): Array of all node positions.
-            camera: Camera object.
-        
-        Returns:
-            list: Indices of nodes that are visible.
-        """
-        visible_indices = []
-        for i in candidate_indices:
-            if self._is_visible(nodes_positions[i], camera):
-                visible_indices.append(i)
-        return visible_indices
-
     def _create_group_gizmo(self, group_center: np.ndarray, selection_count: int):
         """
         Create a group gizmo at the center of selected nodes.
@@ -227,7 +160,7 @@ class SelectionToolTab:
         group_gizmo = self._server.scene.add_transform_controls(
             name="/group_gizmo",
             opacity=1,
-            scale=selection_count,
+            scale=selection_count * 0.01,
             disable_rotations=True,
             visible=True,
         )
@@ -289,27 +222,24 @@ class SelectionToolTab:
 
     def _group_selection(self, group_gizmo, indices, initial_center):
         """
-        On group gizmo move, update the mesh and nodes' positions.
+        On group gizmo move, update the point cloud and nodes' positions.
         """
         new_center = np.array(group_gizmo.position)
         delta = new_center - initial_center
+
+        # Loop through each selected node index.
         for i in indices:
             node = self._editor.get_nodes()[i]
-            new_pos = np.array(node._object.position) + delta
+            # Compute the new position based on the delta.
+            new_pos = np.array(node.get_position()) + delta
+            
+            # Update the node's internal position.
             node._object.position = tuple(new_pos)
             node._control_handle.position = tuple(new_pos)
+            
+            # Directly update the corresponding point in the scene object's points array.
+            self._scene_object.get_points()[i] = new_pos
 
-            distances = np.linalg.norm(self._scene_object.get_global_vertices() - new_pos, axis=1)
-            min_index = np.argmin(distances)
-            new_local = self._scene_object.get_rotation().inverse().apply(
-                new_pos - self._scene_object.get_position()
-            )
-            self._scene_object.get_mesh().vertices[min_index] = new_local
-            self._scene_object.get_global_vertices()[min_index] = new_pos
-
-        # Update the mesh in the scene.
-        self._editor.get_scene_object_handle().vertices = self._scene_object.get_mesh().vertices
-        
-        # Update the initial center for future delta computations.
+        # Update the initial center for future group moves.
         initial_center[:] = new_center
         print("Group gizmo moved, updated selected points")
