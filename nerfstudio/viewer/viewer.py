@@ -218,10 +218,7 @@ class Viewer:
         with tabs.add_tab("Export", viser.Icon.PACKAGE_EXPORT):
             populate_export_tab(self.viser_server, self.control_panel, config_path, self.pipeline.model)
 
-        # with tabs.add_tab("Selection Tool", viser.Icon.PACKAGE_EXPORT):
-        #     populate_selection_tool_tab(self.viser_server, config_path, self.pipeline.model)
-
-
+        # Instantiate custom selection tool
         with tabs.add_tab("Selection Tool", viser.Icon.PACKAGE_EXPORT):
             # Instantiate the SelectionToolTab class
             self.selection_tool_tab = SelectionToolTab(self.viser_server, config_path, self.pipeline.model)

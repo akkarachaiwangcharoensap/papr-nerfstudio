@@ -5,9 +5,7 @@ import numpy as np
 from pathlib import Path
 
 from nerfstudio.models.base_model import Model
-from nerfstudio.viewer.viewer_elements import ViewerRectSelect
-from nerfstudio.viewer.custom.node import Node
-from nerfstudio.viewer.custom.editor import MeshEditor
+from nerfstudio.viewer.custom.editor import PointCloudEditor
 
 class SelectionToolTab:
     def __init__(self, server: viser.ViserServer, config_path: Path, viewer_model: Model):
@@ -15,7 +13,8 @@ class SelectionToolTab:
         self.config_path = config_path
         self.viewer_model = viewer_model
 
-        self._editor = MeshEditor(server)
+        # TODO: Revise the editor once the PAPR is integrated.
+        self._editor = PointCloudEditor(server)
         self._editor.run()
         
         self._scene_object = self._editor.get_scene_object()
@@ -242,4 +241,3 @@ class SelectionToolTab:
 
         # Update the initial center for future group moves.
         initial_center[:] = new_center
-        print("Group gizmo moved, updated selected points")

@@ -3,7 +3,7 @@ import viser
 from nerfstudio.viewer.custom.scene_object import SceneObject
 from nerfstudio.viewer.custom.node import Node
 
-class MeshEditor:
+class PointCloudEditor:
     """
     Main editor class that encapsulates loading and rendering the point cloud,
     creating sphere gizmos, setting up GUI panels, and handling selection logic.
@@ -14,6 +14,8 @@ class MeshEditor:
         self._scene_object = None
         self._tools = []
 
+        # TODO: SceneObject is unnecessary once the PAPR is integrated.
+        # Currently, scene object is being used as an example.
         # Load the point cloud from the PLY file.
         self._scene_object = SceneObject('./butterfly_key_points_normed_flipX_pts.ply')
 
