@@ -149,7 +149,3 @@ export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 ```
 
 ---
-
-## ✅ Done!
-
-You're now set up to run and train with Nerfstudio on WSL using Conda! Happy rendering! 🎉
