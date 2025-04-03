@@ -95,7 +95,7 @@ pip install -e .
 ns-download-data nerfstudio --capture-name=person
 ```
 
-> 🔗 Full list available in `download_data.py`.
+> 🔗 Full list available in [download_data.py](https://github.com/nerfstudio-project/nerfstudio/blob/f31f3bba12841955102f3f3846ee9f855f4a6878/nerfstudio/scripts/downloads/download_data.py#L115-L142).
 
 ### 🧠 Train the Model
 
