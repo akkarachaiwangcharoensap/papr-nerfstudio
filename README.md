@@ -45,8 +45,8 @@ wget https://repo.continuum.io/archive/Anaconda3-2024.10-1-Linux-x86_64.sh
 ### 🐍 Create Conda Environment
 
 ```bash
-conda create --name nerfstudio-custom -y python=3.9
-conda activate nerfstudio-custom
+conda create --name papr-nerfstudio -y python=3.10
+conda activate papr-nerfstudio
 pip install --upgrade pip
 ```
 
