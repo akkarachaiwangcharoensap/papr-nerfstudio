@@ -62,7 +62,7 @@ pip uninstall torch torchvision functorch tinycudann
 
 ### 2. Install PyTorch with CUDA 12.8 
 
-(RTX 5000 Series)
+For RTX 5000 Series:
 ```bash
 pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
 conda install -c "nvidia/label/cuda-12.8.0" cuda-toolkit
