@@ -64,6 +64,10 @@ from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig
 from nerfstudio.pipelines.dynamic_batch import DynamicBatchPipelineConfig
 from nerfstudio.plugins.registry import discover_methods
 
+from nerfstudio.data.datamanagers.papr_datamanager import PAPRDataManagerConfig
+from nerfstudio.models.papr_model import PAPRModelConfig
+from nerfstudio.pipelines.papr_pipeline import PAPRPipelineConfig
+
 method_configs: Dict[str, Union[TrainerConfig, ExternalMethodDummyTrainerConfig]] = {}
 descriptions = {
     "nerfacto": "Recommended real-time model tuned for real captures. This model will be continually updated.",
@@ -82,6 +86,7 @@ descriptions = {
     "neus-facto": "Implementation of NeuS-Facto. (slow)",
     "splatfacto": "Gaussian Splatting model",
     "splatfacto-big": "Larger version of Splatfacto with higher quality.",
+    "papr": "Proximity Attention Point Rendering (PAPR) is a new method for joint novel view synthesis and 3D reconstruction (https://github.com/zvict/papr).",
 }
 
 method_configs["nerfacto"] = TrainerConfig(
@@ -704,8 +709,43 @@ method_configs["splatfacto-big"] = TrainerConfig(
     },
     viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
     vis="viewer",
-)
+),
 
+method_configs["papr"] = TrainerConfig(
+    method_name="papr",
+    steps_per_eval_batch=500,
+    steps_per_save=2000,
+    max_num_iterations=30000,
+    mixed_precision=True,
+    pipeline=PAPRPipelineConfig(
+        datamanager=PAPRDataManagerConfig(
+            dataparser=NerfstudioDataParserConfig(),
+            train_num_rays_per_batch=4096,
+            eval_num_rays_per_batch=4096,
+        ),
+        model=PAPRModelConfig(
+            eval_num_rays_per_chunk=1 << 15,
+            average_init_density=0.01,
+        ),
+    ),
+    optimizers={
+        # TODO: change optimizers and schedulers.
+        "proposal_networks": {
+            "optimizer": AdamOptimizerConfig(lr=1e-2, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(lr_final=0.0001, max_steps=200000),
+        },
+        "fields": {
+            "optimizer": AdamOptimizerConfig(lr=1e-2, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(lr_final=1e-4, max_steps=50000),
+        },
+        "camera_opt": {
+            "optimizer": AdamOptimizerConfig(lr=1e-3, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(lr_final=1e-4, max_steps=5000),
+        },
+    },
+    viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+    vis="viewer",
+)
 
 def merge_methods(methods, method_descriptions, new_methods, new_descriptions, overwrite=True):
     """Merge new methods and descriptions into existing methods and descriptions.
